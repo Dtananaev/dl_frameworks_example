@@ -1,0 +1,1 @@
+docker build . -t tensorflow_example-"$USER":latest
