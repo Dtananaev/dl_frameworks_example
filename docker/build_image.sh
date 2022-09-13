@@ -1,1 +1,1 @@
-docker build . -t tensorflow_example-"$USER":latest
+docker build . -t dl_frameworks_example-"$USER":latest

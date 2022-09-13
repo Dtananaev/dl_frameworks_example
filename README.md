@@ -5,10 +5,6 @@ The example is done on binary semantic segmentation dataset.
 
 # Installation
 
-Initialize git lfs:
-```
-git lfs install
-```
 Create workspace folder in home directory
 ```
 mkdir ~/deeplearning_workspace
@@ -16,9 +12,11 @@ mkdir ~/deeplearning_workspace
 ```
 and clone your repository to that folder.
 ```
+git clone https://github.com/Dtananaev/dl_frameworks_example.git
 cd ~/deeplearning_workspace
 
 ```
+
 
 
 ## Install docker
@@ -35,9 +33,5 @@ The docker should be build successfully.
 
 1. Create container bashrc file with following command:
 ```
-echo "source ~/deeplearning_workspace/venv/torch_tf2/bin/activate" > ~/deeplearning_workspace/.bashrc
+echo "source ~/deeplearning_workspace/venv/dl_env/bin/activate" > ~/deeplearning_workspace/.bashrc
 ```
-
-
-# Dataset
-Upload data files stage_1_test.zip and stage_1_train.zip from: https://www.kaggle.com/keegil/keras-u-net-starter-lb-0-277
