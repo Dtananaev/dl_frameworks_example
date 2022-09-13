@@ -21,6 +21,7 @@ import numpy as np
 import argparse
 from typing import List
 
+
 class CreateDataList:
     """The class creates list of pairs image and label.
     
@@ -51,7 +52,7 @@ class CreateDataList:
         data = [";".join(x) for x in data]
         return data
 
-    def create_datasets_file(self, split="train"):
+    def create_datasets_file(self, split: str="train")-> None:
         """Creates dataset list file.
         
         Args:
