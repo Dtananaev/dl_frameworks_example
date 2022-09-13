@@ -11,3 +11,5 @@ RUN apt-get update \
     libssl-dev libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install zlib and jpg lib for Pillow
+RUN  apt-get update && apt-get install -y zlib1g-dev libjpeg8-dev
