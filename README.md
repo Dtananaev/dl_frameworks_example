@@ -66,3 +66,13 @@ pip install -r dl_frameworks_example/requirements.txt
 ```
 pip install -e dl_frameworks_example/
 ```
+
+# Dataset
+
+In order to run training first you need to create dataset list file:
+```
+cd ~/dl_frameworks_example/framework_examples
+python create_dataset_list.py
+```
+it will create `../dataset/train.datatxt`, `../dataset/val.datatxt`, `../dataset/test.datatxt` with same data for demo purposes.
+

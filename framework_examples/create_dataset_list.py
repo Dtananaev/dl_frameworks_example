@@ -31,6 +31,10 @@ class CreateDataList:
         """Initialize."""
         self.dataset_dir = dataset_dir
 
+    def _remove_global_path(self, data: str) -> str:
+        """The function removes dataset path from string."""
+        return data[len(self.dataset_dir) + 1:]
+
 
     def _get_data(self)-> List[str]:
         """Gets data list from given dataset directory."""
@@ -38,8 +42,10 @@ class CreateDataList:
         search_string = os.path.join(self.dataset_dir, "images", "*.png")
         images_list = np.asarray(sorted(glob.glob(search_string)))
 
+        images_list = np.asarray([self._remove_global_path(x) for x in images_list])
         search_string = os.path.join(self.dataset_dir, "depth", "*.png")
         depth_list = np.asarray(sorted(glob.glob(search_string)))
+        depth_list =  np.asarray([self._remove_global_path(x) for x in depth_list])
 
         data = np.concatenate((images_list[:, None], depth_list[:, None],), axis=1,)
         data = [";".join(x) for x in data]
