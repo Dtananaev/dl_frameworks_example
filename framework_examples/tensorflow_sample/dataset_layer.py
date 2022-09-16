@@ -19,9 +19,11 @@ DEALINGS IN THE SOFTWARE.
 import tensorflow as tf
 import numpy as np
 import os
+import cv2
 from framework_examples.parameters import Parameters
 from framework_examples.file_io import load_dataset_list, load_image
-from typing import List, Tuple
+from typing import List, Tuple, NamedTuple
+
 
 
 class DepthDatasetTensorflow:
@@ -34,16 +36,24 @@ class DepthDatasetTensorflow:
         shuffle: shuffle data if true
     """
 
-    def __init__(self, dataset_basepath: str, dataset_name: str, batchsize: int, shuffle: bool=False)-> None:
+    def __init__(self, dataset_basepath: str, dataset_name: str, batchsize: int, resolution: NamedTuple("input_resolution", (("width", int), ("height", int))), shuffle: bool=False)-> None:
         """Initialize."""
         self.dataset_basepath = dataset_basepath
         self.dataset_name = dataset_name
         self.batchsize = batchsize
         self.shuffle = shuffle
+
+        self.input_height = resolution.height
+        self.input_width = resolution.width
+
+
         # Get the data
         self.dataset_list = load_dataset_list(self.dataset_basepath, self.dataset_name)
         self.num_samples = len(self.dataset_list)
         self.num_it_per_epoch = int(self.num_samples /  self.batchsize)
+
+
+
 
         # Get data layer
         ds = tf.data.Dataset.from_tensor_slices(self.dataset_list)
@@ -79,6 +89,11 @@ class DepthDatasetTensorflow:
         depth_path = os.path.join(self.dataset_basepath, depth_path.numpy().decode("utf8"))
         image, depth = load_image(image_path), load_image(depth_path)
 
+        # resize
+        dims = (self.input_width, self.input_height)
+        image = cv2.resize(image, dims, interpolation=cv2.INTER_AREA)
+        depth = cv2.resize(depth, dims, interpolation=cv2.INTER_NEAREST)
+       
         # Postprocess depth
         depth /= 100.0 # Make depth in meters
         disparity = 1.0 / depth
@@ -93,7 +108,7 @@ if __name__ =="__main__":
     """Demo how to run the data layer."""
     parameters = Parameters()
 
-    demo_dataset = DepthDatasetTensorflow(dataset_basepath=parameters.dataset_basepath,dataset_name="train.datatxt", batchsize=parameters.batchsize, shuffle=True)
+    demo_dataset = DepthDatasetTensorflow(dataset_basepath=parameters.dataset_basepath,dataset_name="train.datatxt", batchsize=parameters.batchsize, resolution=parameters.resolution,shuffle=True)
 
     for image, disparity in demo_dataset.dataset:
         print(f"image {image.shape}, disparity {disparity.shape}")

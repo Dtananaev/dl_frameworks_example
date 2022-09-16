@@ -16,6 +16,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 DEALINGS IN THE SOFTWARE.
 """
 import dataclasses
+from collections import namedtuple
+from typing import NamedTuple
 
 @dataclasses.dataclass
 class Parameters:
@@ -24,6 +26,18 @@ class Parameters:
     # Path to the dataset folder
     dataset_basepath: str = "/home/deeplearning_workspace/dl_frameworks_example/dataset"
 
+    # Checkpoint dir
+    checkpoint_dir = "outputs/checkpoint"
     # batch size
     batchsize: int = 1
 
+    # learning rate
+    learning_rate = 1e-4
+    # weight decay
+    weight_decay: float = 1e-6
+
+    # max number of epochs
+    epochs: int = 10
+
+    # input_resolution
+    resolution: NamedTuple("input_resolution", (("width", int), ("height", int))) = namedtuple('input_resolution', ['height', 'width'])(128, 256)
