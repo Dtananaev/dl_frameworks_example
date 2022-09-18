@@ -15,17 +15,20 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-import tensorflow as tf
 import os
-from framework_examples.tensorflow_sample.dataset_layer import DepthDatasetTensorflow
-from framework_examples.parameters import Parameters
-from framework_examples.tensorflow_sample.model import Unet
-from framework_examples.tensorflow_sample.metrics import AbsoluteRelativeError
-from framework_examples.tensorflow_sample.loss import HuberLoss
+from typing import List, Tuple
+
 import numpy as np
-from tqdm import tqdm
+import tensorflow as tf
+from framework_examples.parameters import Parameters
+from framework_examples.tensorflow_sample.dataset_layer import \
+    DepthDatasetTensorflow
+from framework_examples.tensorflow_sample.loss import HuberLoss
+from framework_examples.tensorflow_sample.metrics import AbsoluteRelativeError
+from framework_examples.tensorflow_sample.model import Unet
 from framework_examples.visualization import depth_to_image
-from typing import Tuple, List
+from tqdm import tqdm
+
 
 def setup_gpu():
     """The function sets up gpu to not allocate all memory."""
@@ -36,7 +39,13 @@ def setup_gpu():
 
 
 @tf.function
-def train_step(optimizer:tf.keras.optimizers.Optimizer, model:tf.keras.Model, images:tf.Tensor, labels:tf.Tensor, loss_object:tf.keras.losses.Loss)->Tuple[tf.Tensor, tf.Tensor]:
+def train_step(
+    optimizer: tf.keras.optimizers.Optimizer,
+    model: tf.keras.Model,
+    images: tf.Tensor,
+    labels: tf.Tensor,
+    loss_object: tf.keras.losses.Loss,
+) -> Tuple[tf.Tensor, tf.Tensor]:
     """This is single training step."""
 
     with tf.GradientTape() as tape:
@@ -48,18 +57,34 @@ def train_step(optimizer:tf.keras.optimizers.Optimizer, model:tf.keras.Model, im
 
     return prediction, loss_value
 
+
 @tf.function
-def val_step(model:tf.keras.Model, images:tf.Tensor, labels:tf.Tensor, loss_object:tf.keras.losses.Loss)->Tuple[tf.Tensor, tf.Tensor]:
+def val_step(
+    model: tf.keras.Model, images: tf.Tensor, labels: tf.Tensor, loss_object: tf.keras.losses.Loss
+) -> Tuple[tf.Tensor, tf.Tensor]:
     """The validation step."""
     val_prediction = model(images, training=False)
     val_loss = loss_object(y_true=labels, y_pred=val_prediction)
     return val_prediction, val_loss
 
-def train_for_one_epoch(train_dataset:tf.data.Dataset, optimizer:tf.keras.optimizers.Optimizer, model:tf.keras.Model, loss_object:tf.keras.losses.Loss, metric:tf.keras.metrics.Metric, summary_dir: str)->List[float]:
+
+def train_for_one_epoch(
+    train_dataset: tf.data.Dataset,
+    optimizer: tf.keras.optimizers.Optimizer,
+    model: tf.keras.Model,
+    loss_object: tf.keras.losses.Loss,
+    metric: tf.keras.metrics.Metric,
+    summary_dir: str,
+) -> List[float]:
     """This is training loop for one epoch."""
     losses, data = [], {}
     writer = tf.summary.create_file_writer(os.path.join(summary_dir, "train"))
-    pbar = tqdm(total=len(list(enumerate(train_dataset.dataset))), position=0, leave=True, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ")
+    pbar = tqdm(
+        total=len(list(enumerate(train_dataset.dataset))),
+        position=0,
+        leave=True,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ",
+    )
     for step, (images, labels) in enumerate(train_dataset.dataset):
 
         prediction, loss_value = train_step(optimizer, model, images, labels, loss_object)
@@ -77,17 +102,27 @@ def train_for_one_epoch(train_dataset:tf.data.Dataset, optimizer:tf.keras.optimi
     # Here summaries on the epoch end
     with writer.as_default():
         groundtruth = depth_to_image(data["images"], data["y_true"]) / 255.0
-        prediction =  depth_to_image(data["images"], data["y_pred"]) / 255.0
+        prediction = depth_to_image(data["images"], data["y_pred"]) / 255.0
         tf.summary.image("Groundtruth", groundtruth, step=optimizer.iterations)
         tf.summary.image("Prediction", prediction, step=optimizer.iterations)
 
     return losses
 
 
-def val_for_one_epoch(val_dataset:tf.data.Dataset, model:tf.keras.Model, loss_object:tf.keras.losses.Loss, metric:tf.keras.metrics.Metric)->List[float]:
+def val_for_one_epoch(
+    val_dataset: tf.data.Dataset,
+    model: tf.keras.Model,
+    loss_object: tf.keras.losses.Loss,
+    metric: tf.keras.metrics.Metric,
+) -> List[float]:
     """This is validation step"""
     losses = []
-    pbar = tqdm(total=len(list(enumerate(val_dataset.dataset))), position=0, leave=True, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ")
+    pbar = tqdm(
+        total=len(list(enumerate(val_dataset.dataset))),
+        position=0,
+        leave=True,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ",
+    )
     for step, (images, labels) in enumerate(val_dataset.dataset):
         val_prediction, val_loss = val_step(model, images, labels, loss_object)
         losses.append(val_loss)
@@ -107,8 +142,20 @@ def train():
     param = Parameters()
 
     # Load dataset
-    train_dataset = DepthDatasetTensorflow(dataset_basepath=param.dataset_basepath,dataset_name="train.datatxt", batchsize=param.batchsize, resolution=param.resolution, shuffle=True)
-    val_dataset = DepthDatasetTensorflow(dataset_basepath=param.dataset_basepath,dataset_name="val.datatxt", batchsize=param.batchsize, resolution=param.resolution, shuffle=False)
+    train_dataset = DepthDatasetTensorflow(
+        dataset_basepath=param.dataset_basepath,
+        dataset_name="train.datatxt",
+        batchsize=param.batchsize,
+        resolution=param.resolution,
+        shuffle=True,
+    )
+    val_dataset = DepthDatasetTensorflow(
+        dataset_basepath=param.dataset_basepath,
+        dataset_name="val.datatxt",
+        batchsize=param.batchsize,
+        resolution=param.resolution,
+        shuffle=False,
+    )
 
     # Initialize model
     model = Unet(weight_decay=param.weight_decay)
@@ -118,7 +165,9 @@ def train():
     model_path = os.path.join(param.checkpoint_dir, "{model}-{epoch:04d}")
 
     # Set up scheduler and optimizer
-    scheduler = tf.keras.optimizers.schedules.CosineDecayRestarts(initial_learning_rate=param.learning_rate, first_decay_steps=train_dataset.num_it_per_epoch)
+    scheduler = tf.keras.optimizers.schedules.CosineDecayRestarts(
+        initial_learning_rate=param.learning_rate, first_decay_steps=train_dataset.num_it_per_epoch
+    )
     optimizer = tf.keras.optimizers.Adam(learning_rate=scheduler)
 
     # Set up the metric for evaluation
@@ -131,7 +180,9 @@ def train():
     for epoch in range(param.epochs):
         print(f"Start of epoch {epoch}")
         save_dir = model_path.format(model=model.name, epoch=epoch)
-        losses_train = train_for_one_epoch(train_dataset, optimizer, model, loss_object, train_abs_rel_metric, param.summary_dir)
+        losses_train = train_for_one_epoch(
+            train_dataset, optimizer, model, loss_object, train_abs_rel_metric, param.summary_dir
+        )
         train_error = train_abs_rel_metric.result()
 
         losses_val = val_for_one_epoch(val_dataset, model, loss_object, val_abs_rel_metric)
@@ -144,6 +195,7 @@ def train():
         model.save(save_dir)
         train_abs_rel_metric.reset_state()
         val_abs_rel_metric.reset_state()
+
 
 if __name__ == "__main__":
     train()

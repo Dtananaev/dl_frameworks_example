@@ -15,29 +15,30 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-import os
-import glob
-import numpy as np
 import argparse
+import glob
+import os
 from typing import List
+
+import numpy as np
 
 
 class CreateDataList:
     """The class creates list of pairs image and label.
-    
+
     Args:
         dataset_dir: the directory with data
     """
-    def __init__(self, dataset_dir: str)-> None:
+
+    def __init__(self, dataset_dir: str) -> None:
         """Initialize."""
         self.dataset_dir = dataset_dir
 
     def _remove_global_path(self, data: str) -> str:
         """The function removes dataset path from string."""
-        return data[len(self.dataset_dir) + 1:]
+        return data[len(self.dataset_dir) + 1 :]
 
-
-    def _get_data(self)-> List[str]:
+    def _get_data(self) -> List[str]:
         """Gets data list from given dataset directory."""
 
         search_string = os.path.join(self.dataset_dir, "images", "*.png")
@@ -46,15 +47,21 @@ class CreateDataList:
         images_list = np.asarray([self._remove_global_path(x) for x in images_list])
         search_string = os.path.join(self.dataset_dir, "depth", "*.png")
         depth_list = np.asarray(sorted(glob.glob(search_string)))
-        depth_list =  np.asarray([self._remove_global_path(x) for x in depth_list])
+        depth_list = np.asarray([self._remove_global_path(x) for x in depth_list])
 
-        data = np.concatenate((images_list[:, None], depth_list[:, None],), axis=1,)
+        data = np.concatenate(
+            (
+                images_list[:, None],
+                depth_list[:, None],
+            ),
+            axis=1,
+        )
         data = [";".join(x) for x in data]
         return data
 
-    def create_datasets_file(self, split: str="train")-> None:
+    def create_datasets_file(self, split: str = "train") -> None:
         """Creates dataset list file.
-        
+
         Args:
             split: train, val, test split
         """
@@ -66,9 +73,7 @@ class CreateDataList:
         with open(filename, "w") as f:
             for item in data_list:
                 f.write("%s\n" % item)
-        print(
-            f"The dataset of the size {len(data_list)} saved in {filename}."
-        )
+        print(f"The dataset of the size {len(data_list)} saved in {filename}.")
 
 
 if __name__ == "__main__":

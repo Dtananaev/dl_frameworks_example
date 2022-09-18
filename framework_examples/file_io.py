@@ -16,12 +16,14 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 DEALINGS IN THE SOFTWARE.
 """
 
-from typing import List
-import numpy as np
-import cv2
 import os
+from typing import List
 
-def load_dataset_list(dataset_basepath: str, dataset_filename: str, delimiter:str=";")-> List[str]:
+import cv2
+import numpy as np
+
+
+def load_dataset_list(dataset_basepath: str, dataset_filename: str, delimiter: str = ";") -> List[str]:
     """Loads list of data from dataset file.
 
     Args:
@@ -39,18 +41,17 @@ def load_dataset_list(dataset_basepath: str, dataset_filename: str, delimiter:st
     dataset_list = [x.strip().split(delimiter) for x in dataset_list]
     return dataset_list
 
-def load_image(filename: str)-> np.ndarray:
+
+def load_image(filename: str) -> np.ndarray:
     """Load image as numpy array.
-    
+
     Args:
         filename: filepath to the image
 
     Returns:
-        image: numpy array float32 
+        image: numpy array float32
     """
     image = np.asarray(cv2.imread(filename, -1), dtype=np.float32)
     if image.shape[-1] == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
-
-

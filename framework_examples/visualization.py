@@ -15,10 +15,12 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-def depth_to_image(images:np.ndarray, depth:np.ndarray, alpha:float=0.4)->np.ndarray:
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def depth_to_image(images: np.ndarray, depth: np.ndarray, alpha: float = 0.4) -> np.ndarray:
     """Creates blended image with depth map.
 
     Args:
@@ -33,7 +35,7 @@ def depth_to_image(images:np.ndarray, depth:np.ndarray, alpha:float=0.4)->np.nda
 
     for img, d_img in zip(images, depth):
         depth_relative = d_img / (np.percentile(d_img, 95) + 1e-8)
-        d_image = 255.0 * cmap(np.squeeze(np.clip(depth_relative, 0., 1.0)))[..., :3]
+        d_image = 255.0 * cmap(np.squeeze(np.clip(depth_relative, 0.0, 1.0)))[..., :3]
         img = np.transpose(img, (1, 2, 0))
         tinted_img = alpha * img + (1.0 - alpha) * d_image
         tinted_images.append(tinted_img)

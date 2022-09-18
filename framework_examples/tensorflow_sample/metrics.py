@@ -17,8 +17,10 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from pickle import NONE
+from typing import Any, Optional
+
 import tensorflow as tf
-from typing import Optional, Any
+
 
 class AbsoluteRelativeError(tf.keras.metrics.Metric):
     """Computes absolute relatie error.
@@ -28,14 +30,15 @@ class AbsoluteRelativeError(tf.keras.metrics.Metric):
     Args:
         name: The metric name
     """
-    def __init__(self, name:str="absolute_relative_error", **kwargs:Optional[Any])->None:
+
+    def __init__(self, name: str = "absolute_relative_error", **kwargs: Optional[Any]) -> None:
         """Initialize."""
         super().__init__(name=name, **kwargs)
 
         self.abs_rel_error = self.add_weight(name="abs_rel_err", initializer="zeros")
         self.batch_count = self.add_weight(name="batch_count", initializer="zeros")
 
-    def update_state(self, y_true: tf.Tensor, y_pred: tf.Tensor, sample_weight:tf.Tensor=None)->None:
+    def update_state(self, y_true: tf.Tensor, y_pred: tf.Tensor, sample_weight: tf.Tensor = None) -> None:
         """Updates sate for abs_rel_error."""
 
         values = tf.math.divide_no_nan(tf.abs(y_true - y_pred), y_true)
@@ -49,11 +52,11 @@ class AbsoluteRelativeError(tf.keras.metrics.Metric):
         self.abs_rel_error.assign_add(tf.reduce_sum(values) / num_samples)
         self.batch_count.assign_add(1.0)
 
-    def result(self)-> tf.Tensor:
+    def result(self) -> tf.Tensor:
         """Returns result."""
         return self.abs_rel_error / self.batch_count
-    
-    def reset_state(self)->None:
+
+    def reset_state(self) -> None:
         """Reset states."""
         self.abs_rel_error.assign(0.0)
         self.batch_count.assign(0.0)

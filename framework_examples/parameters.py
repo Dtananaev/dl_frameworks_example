@@ -19,6 +19,7 @@ import dataclasses
 from collections import namedtuple
 from typing import NamedTuple
 
+
 @dataclasses.dataclass
 class Parameters:
     """The parameters class."""
@@ -42,4 +43,6 @@ class Parameters:
     epochs: int = 10
 
     # input_resolution
-    resolution: NamedTuple("input_resolution", (("width", int), ("height", int))) = namedtuple('input_resolution', ['height', 'width'])(128, 256)
+    resolution: NamedTuple("input_resolution", (("width", int), ("height", int))) = namedtuple(
+        "input_resolution", ["height", "width"]
+    )(128, 256)
