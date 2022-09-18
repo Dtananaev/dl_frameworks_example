@@ -1,0 +1,9 @@
+*~
+*.pyc
+*.txt
+*.datatxt
+*.pb
+*.data-*
+*.index
+events.out.*
+PKG-INFO

@@ -16,7 +16,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 DEALINGS IN THE SOFTWARE.
 """
 
-from pickle import NONE
 from typing import Any, Optional
 
 import tensorflow as tf
