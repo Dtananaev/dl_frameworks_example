@@ -17,4 +17,32 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from torchmetrics import Metric
+from typing import Optional, Any
+import torch
+class AbsoluteRelativeError(Metric):
+    """Computes absolute relatie error.
 
+    Note: see https://torchmetrics.readthedocs.io/en/stable/pages/implement.html#implement
+    """
+
+    def __init__(self, **kwargs: Optional[Any]) -> None:
+        """Initialize."""
+        super().__init__(**kwargs)
+        self.add_state("abs_rel_err", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("batch_count", default=torch.tensor(0), dist_reduce_fx="sum")
+
+
+    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
+        """Updates sate for abs_rel_error."""
+        preds, target = self._input_format(preds, target)
+        assert preds.shape == target.shape
+
+        values = torch.div(torch.abs(preds - target), target)
+        values = torch.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0)
+        num_samples = torch.sum((values != 0.0).type(torch.FloatTensor))
+        self.abs_rel_err += torch.sum(values) / num_samples
+        self.batch_count += 1.0
+
+    def compute(self):
+        """Result."""
+        return self.abs_rel_err.float() / self.batch_count
