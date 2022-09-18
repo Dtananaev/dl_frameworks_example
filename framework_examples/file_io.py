@@ -48,6 +48,9 @@ def load_image(filename: str)-> np.ndarray:
     Returns:
         image: numpy array float32 
     """
-    return np.asarray(cv2.imread(filename, -1), dtype=np.float32)
+    image = np.asarray(cv2.imread(filename, -1), dtype=np.float32)
+    if image.shape[-1] == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
 
 

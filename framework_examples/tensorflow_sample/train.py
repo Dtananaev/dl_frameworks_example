@@ -24,7 +24,7 @@ from framework_examples.tensorflow_sample.metrics import AbsoluteRelativeError
 from framework_examples.tensorflow_sample.loss import HuberLoss
 import numpy as np
 from tqdm import tqdm
-
+from framework_examples.visualization import depth_to_image
 from typing import Tuple, List
 
 def setup_gpu():
@@ -55,19 +55,32 @@ def val_step(model:tf.keras.Model, images:tf.Tensor, labels:tf.Tensor, loss_obje
     val_loss = loss_object(y_true=labels, y_pred=val_prediction)
     return val_prediction, val_loss
 
-def train_for_one_epoch(train_dataset:tf.data.Dataset, optimizer:tf.keras.optimizers.Optimizer, model:tf.keras.Model, loss_object:tf.keras.losses.Loss, metric:tf.keras.metrics.Metric)->List[float]:
+def train_for_one_epoch(train_dataset:tf.data.Dataset, optimizer:tf.keras.optimizers.Optimizer, model:tf.keras.Model, loss_object:tf.keras.losses.Loss, metric:tf.keras.metrics.Metric, summary_dir: str)->List[float]:
     """This is training loop for one epoch."""
-    losses = []
+    losses, data = [], {}
+    writer = tf.summary.create_file_writer(os.path.join(summary_dir, "train"))
     pbar = tqdm(total=len(list(enumerate(train_dataset.dataset))), position=0, leave=True, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ")
     for step, (images, labels) in enumerate(train_dataset.dataset):
 
         prediction, loss_value = train_step(optimizer, model, images, labels, loss_object)
+        # Here summaries on the batch end
+        with writer.as_default():
+            tf.summary.scalar("Loss", loss_value, step=optimizer.iterations)
+
         losses.append(loss_value)
+        data = {"images": images.numpy(), "y_true": labels.numpy(), "y_pred": prediction.numpy()}
+        # Update metrics
         metric.update_state(y_true=labels, y_pred=prediction)
-
-
         pbar.set_description("Training loss for step %s: %.4f" % (int(step), float(loss_value)))
         pbar.update()
+
+    # Here summaries on the epoch end
+    with writer.as_default():
+        groundtruth = depth_to_image(data["images"], data["y_true"]) / 255.0
+        prediction =  depth_to_image(data["images"], data["y_pred"]) / 255.0
+        tf.summary.image("Groundtruth", groundtruth, step=optimizer.iterations)
+        tf.summary.image("Prediction", prediction, step=optimizer.iterations)
+
     return losses
 
 
@@ -118,12 +131,11 @@ def train():
     for epoch in range(param.epochs):
         print(f"Start of epoch {epoch}")
         save_dir = model_path.format(model=model.name, epoch=epoch)
-        losses_train = train_for_one_epoch(train_dataset, optimizer, model, loss_object, train_abs_rel_metric)
+        losses_train = train_for_one_epoch(train_dataset, optimizer, model, loss_object, train_abs_rel_metric, param.summary_dir)
         train_error = train_abs_rel_metric.result()
 
         losses_val = val_for_one_epoch(val_dataset, model, loss_object, val_abs_rel_metric)
         val_err = val_abs_rel_metric.result()
-
 
         losses_train_mean, losses_val_mean = np.mean(losses_train), np.mean(losses_val)
         print(

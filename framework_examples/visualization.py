@@ -1,4 +1,4 @@
-"""The parameters file."""
+"""Visualization script."""
 __copyright__ = """
 Copyright (c) 2022 Tananaev Denis
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -15,31 +15,26 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-import dataclasses
-from collections import namedtuple
-from typing import NamedTuple
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+def depth_to_image(images:np.ndarray, depth:np.ndarray, alpha:float=0.4)->np.ndarray:
+    """Creates blended image with depth map.
 
-@dataclasses.dataclass
-class Parameters:
-    """The parameters class."""
+    Args:
+       images: input images batch of shape [batch, 3, height, width]
+       depth: depth batch of shape [batch, 1, height, width]
 
-    # Path to the dataset folder
-    dataset_basepath: str = "/home/deeplearning_workspace/dl_frameworks_example/dataset"
+    Returns:
+        tinted_image: blended depth image [batch, height, width, channels]
+    """
+    tinted_images = []
+    cmap = plt.cm.plasma
 
-    # Summary dir
-    summary_dir = "outputs/summary"
-    # Checkpoint dir
-    checkpoint_dir = "outputs/checkpoint"
-    # batch size
-    batchsize: int = 1
-
-    # learning rate
-    learning_rate = 1e-4
-    # weight decay
-    weight_decay: float = 1e-6
-
-    # max number of epochs
-    epochs: int = 10
-
-    # input_resolution
-    resolution: NamedTuple("input_resolution", (("width", int), ("height", int))) = namedtuple('input_resolution', ['height', 'width'])(128, 256)
+    for img, d_img in zip(images, depth):
+        depth_relative = d_img / (np.percentile(d_img, 95) + 1e-8)
+        d_image = 255.0 * cmap(np.squeeze(np.clip(depth_relative, 0., 1.0)))[..., :3]
+        img = np.transpose(img, (1, 2, 0))
+        tinted_img = alpha * img + (1.0 - alpha) * d_image
+        tinted_images.append(tinted_img)
+    return np.asarray(tinted_images)

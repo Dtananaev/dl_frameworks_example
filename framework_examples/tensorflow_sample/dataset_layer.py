@@ -25,7 +25,6 @@ from framework_examples.file_io import load_dataset_list, load_image
 from typing import List, Tuple, NamedTuple
 
 
-
 class DepthDatasetTensorflow:
     """This is data loading layer for tensorflow 2.
     
