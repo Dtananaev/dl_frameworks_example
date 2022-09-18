@@ -79,13 +79,8 @@ def train_for_one_epoch(
     """This is training loop for one epoch."""
     losses, data = [], {}
     writer = tf.summary.create_file_writer(os.path.join(summary_dir, "train"))
-    pbar = tqdm(
-        total=len(list(enumerate(train_dataset.dataset))),
-        position=0,
-        leave=True,
-        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ",
-    )
-    for step, (images, labels) in enumerate(train_dataset.dataset):
+
+    for (images, labels) in tqdm(train_dataset.dataset, total=train_dataset.num_it_per_epoch, desc="training"):
 
         prediction, loss_value = train_step(optimizer, model, images, labels, loss_object)
         # Here summaries on the batch end
@@ -96,8 +91,6 @@ def train_for_one_epoch(
         data = {"images": images.numpy(), "y_true": labels.numpy(), "y_pred": prediction.numpy()}
         # Update metrics
         metric.update_state(y_true=labels, y_pred=prediction)
-        pbar.set_description("Training loss for step %s: %.4f" % (int(step), float(loss_value)))
-        pbar.update()
 
     # Here summaries on the epoch end
     with writer.as_default():
@@ -117,18 +110,10 @@ def val_for_one_epoch(
 ) -> List[float]:
     """This is validation step"""
     losses = []
-    pbar = tqdm(
-        total=len(list(enumerate(val_dataset.dataset))),
-        position=0,
-        leave=True,
-        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} ",
-    )
-    for step, (images, labels) in enumerate(val_dataset.dataset):
+    for images, labels in tqdm(val_dataset.dataset, total=val_dataset.num_it_per_epoch, desc="validation"):
         val_prediction, val_loss = val_step(model, images, labels, loss_object)
         losses.append(val_loss)
         metric.update_state(y_true=labels, y_pred=val_prediction)
-        pbar.set_description("Validation loss for step %s: %.4f" % (int(step), float(val_loss)))
-        pbar.update()
     return losses
 
 
