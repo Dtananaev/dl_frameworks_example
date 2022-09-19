@@ -85,7 +85,7 @@ class EncoderBlock(Model):
         self.pool = tf.keras.layers.MaxPool2D(pool_size=pool_size, data_format="channels_first")
         self.dropout = tf.keras.layers.Dropout(rate=dropout)
 
-    def call(self, input: tf.Tensor, training: bool = False) -> tf.Tensor:
+    def call(self, input: tf.Tensor, training: bool = False) -> Tuple[tf.Tensor,tf.Tensor] :
         """The call function."""
         skip_connection = features = self.double_conv(input)
         features = self.pool(features)

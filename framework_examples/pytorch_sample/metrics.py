@@ -19,6 +19,7 @@ DEALINGS IN THE SOFTWARE.
 from torchmetrics import Metric
 from typing import Optional, Any
 import torch
+
 class AbsoluteRelativeError(Metric):
     """Computes absolute relatie error.
 
@@ -30,7 +31,6 @@ class AbsoluteRelativeError(Metric):
         super().__init__(**kwargs)
         self.add_state("abs_rel_err", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("batch_count", default=torch.tensor(0), dist_reduce_fx="sum")
-
 
     def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         """Updates sate for abs_rel_error."""
