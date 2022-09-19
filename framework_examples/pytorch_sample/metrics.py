@@ -29,18 +29,17 @@ class AbsoluteRelativeError(Metric):
     def __init__(self, **kwargs: Optional[Any]) -> None:
         """Initialize."""
         super().__init__(**kwargs)
-        self.add_state("abs_rel_err", default=torch.tensor(0), dist_reduce_fx="sum")
-        self.add_state("batch_count", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("abs_rel_err", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("batch_count", default=torch.tensor(0.0), dist_reduce_fx="sum")
 
     def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         """Updates sate for abs_rel_error."""
-        preds, target = self._input_format(preds, target)
-        assert preds.shape == target.shape
 
         values = torch.div(torch.abs(preds - target), target)
         values = torch.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0)
-        num_samples = torch.sum((values != 0.0).type(torch.FloatTensor))
-        self.abs_rel_err += torch.sum(values) / num_samples
+        num_samples = torch.sum((values != 0.0).type(preds.dtype))
+
+        self.abs_rel_err +=  torch.sum(values).float() /  num_samples
         self.batch_count += 1.0
 
     def compute(self):

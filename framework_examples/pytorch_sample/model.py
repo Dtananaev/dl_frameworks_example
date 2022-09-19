@@ -83,7 +83,6 @@ class EncoderBlock(nn.Module):
         return skip_connection, features
 
 
-
 class DecoderBlock(nn.Module):
     """U-net decoder block.
 
@@ -105,11 +104,11 @@ class DecoderBlock(nn.Module):
     ):
         """Initialization."""
         super().__init__()
-        self.transp_conv = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=kernel, stride=strides)
+        self.transp_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels, kernel_size=(2, 2), stride=strides)
         self.dropout = nn.Dropout(p=dropout)
         self.double_conv = DoubleConv(in_channels=2 * out_channels, out_channels=out_channels, kernel=kernel)
 
-    def call(self, input: Tuple[ torch.Tensor,  torch.Tensor], ) ->  torch.Tensor:
+    def forward(self, input: Tuple[ torch.Tensor,  torch.Tensor], ) ->  torch.Tensor:
         """The call function."""
         skip_connection, features = input
         features = self.transp_conv(features)
@@ -155,22 +154,22 @@ class UnetDecoder(nn.Module):
         """Initialization."""
         super().__init__()
 
-        self.block1 = DecoderBlock(in_channels=1024, out_channel=512, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.block2 = DecoderBlock(in_channels=512, out_channel=256, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.block3 = DecoderBlock(in_channels=256, out_channel=128, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.block4 = DecoderBlock(in_channels=128, out_channel=64, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.final_layer = nn.Conv2d(in_channels=64, out_channels=1, kernel_size=(1,1), padding=1, bias=True)
+        self.block1 = DecoderBlock(in_channels=1024, out_channels=512, kernel=(3, 3), strides=(2, 2),dropout=dropout)
+        self.block2 = DecoderBlock(in_channels=512, out_channels=256, kernel=(3, 3), strides=(2, 2),dropout=dropout)
+        self.block3 = DecoderBlock(in_channels=256, out_channels=128, kernel=(3, 3), strides=(2, 2),dropout=dropout)
+        self.block4 = DecoderBlock(in_channels=128, out_channels=64, kernel=(3, 3), strides=(2, 2),dropout=dropout)
+        self.final_layer = nn.Conv2d(in_channels=64, out_channels=1, kernel_size=(1,1), padding=0, bias=True)
         torch.nn.init.kaiming_normal_(self.final_layer.weight)
 
 
-    def call(self, input: Tuple[torch.Tensor, Tuple[torch.Tensor, ...]], training: bool = False) -> torch.Tensor:
+    def forward(self, input: Tuple[torch.Tensor, Tuple[torch.Tensor, ...]]) -> torch.Tensor:
         """The call function."""
         features, (skip1, skip2, skip3, skip4) = input
 
-        features = self.block1((skip4, features), training=training)
-        features = self.block2((skip3, features), training=training)
-        features = self.block3((skip2, features), training=training)
-        features = self.block4((skip1, features), training=training)
+        features = self.block1((skip4, features))
+        features = self.block2((skip3, features))
+        features = self.block3((skip2, features))
+        features = self.block4((skip1, features))
         output = self.final_layer(features)
         return output
 
@@ -186,14 +185,15 @@ class Unet(nn.Module):
         dropout: dropout
     """
 
-    def __init__(self, dropout: float = 0.3) -> None:
+    def __init__(self, dropout: float = 0.3, name="Unet") -> None:
         """Initialization."""
         super().__init__()
+        self.name = name
         self.encoder = UnetEncoder(dropout=dropout)
-        self.bottleneck = DoubleConv(filters=1024, kernel=(3, 3))
+        self.bottleneck = DoubleConv(in_channels=512, out_channels=1024, kernel=(3, 3))
         self.decoder = UnetDecoder(dropout=dropout)
 
-    def call(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """The call function."""
         # Normalize image
         input /= 255.0
