@@ -26,24 +26,29 @@ from framework_examples.pytorch_sample.model import Unet
 from framework_examples.pytorch_sample.metrics import AbsoluteRelativeError
 from framework_examples.pytorch_sample.loss import HuberLoss
 from torch.utils import data
+from torch import nn
+from torchmetrics import Metric
+
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from framework_examples.visualization import depth_to_image
 import torchvision
+from typing import List
 
+def set_random_seed(seed:int, deterministic:bool=True, benchmark:bool=True)->None:
+    """Set random seed.
 
-def set_random_seed(seed, deterministic=True, benchmark=True):
-    """
-    Deterministic operations are often slower than nondeterministic operations,
-    so single-run performance may decrease for your model.
-    For further details see:
-    https://pytorch.org/docs/stable/notes/randomness.html
-    Arguments:
+    Note: Deterministic operations are often slower than nondeterministic operations,
+        so single-run performance may decrease for your model.
+        For further details see:
+        https://pytorch.org/docs/stable/notes/randomness.html
+
+    Args:
         seed: random seed
         deterministic: if true pushes to get deterministic algorithms
         benchmark: if True fast and non-deterministics (if deterministic=False) otherwise False
-        Note: benchmark makes autotune of the trainig process thus first epoch can be slower,
-         it should be false when using multiscale input or stochastic depth networks
+        (Note: benchmark makes autotune of the trainig process thus first epoch can be slower,
+         it should be false when using multiscale input or stochastic depth networks)
     """
     # Set random seed
     random.seed(seed)
@@ -56,18 +61,21 @@ def set_random_seed(seed, deterministic=True, benchmark=True):
     torch.backends.cudnn.benchmark = benchmark
     torch.backends.cudnn.deterministic = deterministic
 
-def seed_worker(worker_id):
-    """
-    Use worker_init_fn() to preserve same shuffling in dataloader
-    For further details see:
-    https://pytorch.org/docs/stable/notes/randomness.html
+def seed_worker(worker_id:int)->None:
+    """ Seed workers.
+
+    Note: Use worker_init_fn() to preserve same shuffling in dataloader
+        For further details see:
+        https://pytorch.org/docs/stable/notes/randomness.html
+    Args:
+        worker_id: the id of worker
     """
     worker_seed = torch.initial_seed() % 2 ** 32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
 
-def train_for_one_epoch(train_dataloader, model, loss_object, optimizer, scheduler, epoch, device, metrics, summary_dir):
+def train_for_one_epoch(train_dataloader: data.DataLoader, model:nn.Module, loss_object:nn.Module, optimizer:torch.optim.Optimizer, scheduler:torch.optim.lr_scheduler._LRScheduler, epoch:int, device:str, metrics:Metric, summary_dir:str)->List[float]:
     """This is training for one epoch."""
     model.train()
     losses, data = [], {}
@@ -113,7 +121,7 @@ def train_for_one_epoch(train_dataloader, model, loss_object, optimizer, schedul
 
 
 
-def val_for_one_epoch(val_dataloader, model, loss_object, device, metrics):
+def val_for_one_epoch(val_dataloader: data.DataLoader, model:nn.Module, loss_object:nn.Module, device:str, metrics:Metric)-> List[float]:
     """This is validation step."""
     model.eval()
     losses =[]
@@ -160,7 +168,6 @@ def train()-> None:
 
     optimizer = torch.optim.Adam(model.parameters(), lr=param.learning_rate, weight_decay=param.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0 =1, T_mult=1, eta_min=0, last_epoch=- 1, verbose=False)
-
     # Set up the metric for evaluation
     train_abs_rel_metric = AbsoluteRelativeError().to(device)
     val_abs_rel_metric = AbsoluteRelativeError().to(device)
