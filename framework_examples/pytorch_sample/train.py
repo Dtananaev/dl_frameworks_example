@@ -17,25 +17,26 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import os
-import torch
-import numpy as np
 import random
-from framework_examples.parameters import Parameters
-from framework_examples.pytorch_sample.dataset_layer import DepthDatasetPytorch
-from framework_examples.pytorch_sample.model import Unet
-from framework_examples.pytorch_sample.metrics import AbsoluteRelativeError
-from framework_examples.pytorch_sample.loss import HuberLoss
-from torch.utils import data
-from torch import nn
-from torchmetrics import Metric
-
-from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
-from framework_examples.visualization import depth_to_image
-import torchvision
 from typing import List
 
-def set_random_seed(seed:int, deterministic:bool=True, benchmark:bool=True)->None:
+import numpy as np
+import torch
+import torchvision
+from framework_examples.parameters import Parameters
+from framework_examples.pytorch_sample.dataset_layer import DepthDatasetPytorch
+from framework_examples.pytorch_sample.loss import HuberLoss
+from framework_examples.pytorch_sample.metrics import AbsoluteRelativeError
+from framework_examples.pytorch_sample.model import Unet
+from framework_examples.visualization import depth_to_image
+from torch import nn
+from torch.utils import data
+from torch.utils.tensorboard import SummaryWriter
+from torchmetrics import Metric
+from tqdm import tqdm
+
+
+def set_random_seed(seed: int, deterministic: bool = True, benchmark: bool = True) -> None:
     """Set random seed.
 
     Note: Deterministic operations are often slower than nondeterministic operations,
@@ -61,8 +62,9 @@ def set_random_seed(seed:int, deterministic:bool=True, benchmark:bool=True)->Non
     torch.backends.cudnn.benchmark = benchmark
     torch.backends.cudnn.deterministic = deterministic
 
-def seed_worker(worker_id:int)->None:
-    """ Seed workers.
+
+def seed_worker(worker_id: int) -> None:
+    """Seed workers.
 
     Note: Use worker_init_fn() to preserve same shuffling in dataloader
         For further details see:
@@ -75,14 +77,24 @@ def seed_worker(worker_id:int)->None:
     random.seed(worker_seed)
 
 
-def train_for_one_epoch(train_dataloader: data.DataLoader, model:nn.Module, loss_object:nn.Module, optimizer:torch.optim.Optimizer, scheduler:torch.optim.lr_scheduler._LRScheduler, epoch:int, device:str, metrics:Metric, summary_dir:str)->List[float]:
+def train_for_one_epoch(
+    train_dataloader: data.DataLoader,
+    model: nn.Module,
+    loss_object: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    scheduler: torch.optim.lr_scheduler._LRScheduler,
+    epoch: int,
+    device: str,
+    metrics: Metric,
+    summary_dir: str,
+) -> List[float]:
     """This is training for one epoch."""
     model.train()
     losses, data = [], {}
     log_dir = os.path.join(summary_dir, "train")
     steps_per_epoch = len(train_dataloader)
     global_step = epoch * steps_per_epoch
-    writer =  SummaryWriter(log_dir=log_dir) 
+    writer = SummaryWriter(log_dir=log_dir)
     for step, sample in tqdm(enumerate(train_dataloader), desc=f"Epoch {epoch}", total=steps_per_epoch):
         images, labels = sample[0].to(device), sample[1].to(device)
 
@@ -107,10 +119,14 @@ def train_for_one_epoch(train_dataloader: data.DataLoader, model:nn.Module, loss
         writer.add_scalar("loss", loss_value, global_step)
 
     # Here summaries on the epoch end
-    images, y_true, y_pred = data["images"].cpu().detach().numpy(), data["y_true"].cpu().detach().numpy(),  data["y_pred"].cpu().detach().numpy()
+    images, y_true, y_pred = (
+        data["images"].cpu().detach().numpy(),
+        data["y_true"].cpu().detach().numpy(),
+        data["y_pred"].cpu().detach().numpy(),
+    )
     # Transpose to channels first
     groundtruth = np.transpose(depth_to_image(images, y_true), (0, 3, 1, 2)) / 255.0
-    prediction =  np.transpose(depth_to_image(images, y_pred), (0, 3, 1, 2)) / 255.0
+    prediction = np.transpose(depth_to_image(images, y_pred), (0, 3, 1, 2)) / 255.0
     grid_gt = torchvision.utils.make_grid(torch.from_numpy(groundtruth))
     grid_pred = torchvision.utils.make_grid(torch.from_numpy(prediction))
 
@@ -120,11 +136,12 @@ def train_for_one_epoch(train_dataloader: data.DataLoader, model:nn.Module, loss
     return losses
 
 
-
-def val_for_one_epoch(val_dataloader: data.DataLoader, model:nn.Module, loss_object:nn.Module, device:str, metrics:Metric)-> List[float]:
+def val_for_one_epoch(
+    val_dataloader: data.DataLoader, model: nn.Module, loss_object: nn.Module, device: str, metrics: Metric
+) -> List[float]:
     """This is validation step."""
     model.eval()
-    losses =[]
+    losses = []
     with torch.no_grad():
         for batch, sample in tqdm(enumerate(val_dataloader), desc=f"Validation", total=len(val_dataloader)):
             images, labels = sample[0].to(device), sample[1].to(device)
@@ -134,7 +151,8 @@ def val_for_one_epoch(val_dataloader: data.DataLoader, model:nn.Module, loss_obj
             metrics.update(preds=prediction, target=labels)
     return losses
 
-def train()-> None:
+
+def train() -> None:
     # Set up gpu
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device {device}")
@@ -152,7 +170,14 @@ def train()-> None:
         resolution=param.resolution,
     )
     train_data_loader = data.DataLoader(
-        train_dataset, batch_size=param.batchsize, shuffle=True, drop_last=True, num_workers=2, prefetch_factor=2, worker_init_fn=seed_worker)
+        train_dataset,
+        batch_size=param.batchsize,
+        shuffle=True,
+        drop_last=True,
+        num_workers=2,
+        prefetch_factor=2,
+        worker_init_fn=seed_worker,
+    )
 
     val_dataset = DepthDatasetPytorch(
         dataset_basepath=param.dataset_basepath,
@@ -160,30 +185,48 @@ def train()-> None:
         resolution=param.resolution,
     )
     val_data_loader = data.DataLoader(
-        val_dataset, batch_size=param.batchsize, shuffle=False, drop_last=True, num_workers=2, prefetch_factor=2)
+        val_dataset, batch_size=param.batchsize, shuffle=False, drop_last=True, num_workers=2, prefetch_factor=2
+    )
 
     # Initialize model
     model = Unet().to(device)
     model_path = os.path.join(param.checkpoint_dir, "{model}-{epoch:04d}")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=param.learning_rate, weight_decay=param.weight_decay)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0 =1, T_mult=1, eta_min=0, last_epoch=- 1, verbose=False)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer, T_0=1, T_mult=1, eta_min=0, last_epoch=-1, verbose=False
+    )
     # Set up the metric for evaluation
     train_abs_rel_metric = AbsoluteRelativeError().to(device)
     val_abs_rel_metric = AbsoluteRelativeError().to(device)
     # Set up loss
     loss_object = HuberLoss(treshold=1.0)
 
-      # Main training and evaluation loop
+    # Main training and evaluation loop
     for epoch in range(param.epochs):
         print(f"Start of epoch {epoch}")
         save_dir = model_path.format(model=model.name, epoch=epoch)
         os.makedirs(save_dir, exist_ok=True)
-        losses_train = train_for_one_epoch(train_dataloader=train_data_loader, model=model, loss_object=loss_object, optimizer=optimizer, scheduler=scheduler, epoch=epoch, device=device, metrics=train_abs_rel_metric, summary_dir=param.summary_dir
+        losses_train = train_for_one_epoch(
+            train_dataloader=train_data_loader,
+            model=model,
+            loss_object=loss_object,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            epoch=epoch,
+            device=device,
+            metrics=train_abs_rel_metric,
+            summary_dir=param.summary_dir,
         )
         train_error = train_abs_rel_metric.compute()
 
-        losses_val = val_for_one_epoch(val_dataloader=val_data_loader, model=model, loss_object=loss_object, device=device, metrics=val_abs_rel_metric)
+        losses_val = val_for_one_epoch(
+            val_dataloader=val_data_loader,
+            model=model,
+            loss_object=loss_object,
+            device=device,
+            metrics=val_abs_rel_metric,
+        )
         val_err = val_abs_rel_metric.compute()
 
         losses_train_mean, losses_val_mean = torch.mean(torch.stack(losses_train)), torch.mean(torch.stack(losses_val))
@@ -194,6 +237,7 @@ def train()-> None:
         torch.save(model.state_dict(), os.path.join(save_dir, "model.pth"))
         train_abs_rel_metric.reset()
         val_abs_rel_metric.reset()
+
 
 if __name__ == "__main__":
     train()

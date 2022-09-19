@@ -17,10 +17,11 @@ DEALINGS IN THE SOFTWARE.
 """
 
 
+from typing import Tuple, Union
+
 import torch
 import torch.nn.functional as F
 from torch import nn
-from typing import Union, Tuple
 
 
 class DoubleConv(nn.Module):
@@ -33,10 +34,10 @@ class DoubleConv(nn.Module):
         weight_decay: the weight decay regularization
     """
 
-    def __init__(self, in_channels:int, out_channels:int, kernel:Union[int, Tuple[int, int]]=3)->None:
+    def __init__(self, in_channels: int, out_channels: int, kernel: Union[int, Tuple[int, int]] = 3) -> None:
         """Initialization."""
         super().__init__()
-        self.activation =  nn.ReLU()
+        self.activation = nn.ReLU()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=kernel, padding=1, bias=True)
         torch.nn.init.kaiming_normal_(self.conv1.weight)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=kernel, padding=1, bias=True)
@@ -66,12 +67,12 @@ class EncoderBlock(nn.Module):
         out_channels: int,
         kernel: Union[int, Tuple[int, int]],
         pool_size: Union[int, Tuple[int, int]],
-        dropout:float =0.3,   
+        dropout: float = 0.3,
     ) -> None:
         """Initialization."""
         super().__init__()
-        self.double_conv = DoubleConv(in_channels=in_channels,  out_channels=out_channels, kernel=kernel)
-        self.pool =  nn.MaxPool2d(pool_size)
+        self.double_conv = DoubleConv(in_channels=in_channels, out_channels=out_channels, kernel=kernel)
+        self.pool = nn.MaxPool2d(pool_size)
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -104,11 +105,16 @@ class DecoderBlock(nn.Module):
     ):
         """Initialization."""
         super().__init__()
-        self.transp_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels, kernel_size=(2, 2), stride=strides)
+        self.transp_conv = nn.ConvTranspose2d(
+            in_channels=in_channels, out_channels=out_channels, kernel_size=(2, 2), stride=strides
+        )
         self.dropout = nn.Dropout(p=dropout)
         self.double_conv = DoubleConv(in_channels=2 * out_channels, out_channels=out_channels, kernel=kernel)
 
-    def forward(self, input: Tuple[ torch.Tensor,  torch.Tensor], ) ->  torch.Tensor:
+    def forward(
+        self,
+        input: Tuple[torch.Tensor, torch.Tensor],
+    ) -> torch.Tensor:
         """The call function."""
         skip_connection, features = input
         features = self.transp_conv(features)
@@ -124,15 +130,16 @@ class UnetEncoder(nn.Module):
     Args:
         dropout: dropout
     """
+
     def __init__(self, dropout=0.3) -> None:
         """Initialization."""
         super().__init__()
-        self.block1 = EncoderBlock(in_channels=3, out_channels=64, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)  
-        self.block2 = EncoderBlock(in_channels=64, out_channels=128, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)  
-        self.block3 = EncoderBlock(in_channels=128, out_channels=256, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)  
-        self.block4 = EncoderBlock(in_channels=256, out_channels=512, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)  
+        self.block1 = EncoderBlock(in_channels=3, out_channels=64, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)
+        self.block2 = EncoderBlock(in_channels=64, out_channels=128, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)
+        self.block3 = EncoderBlock(in_channels=128, out_channels=256, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)
+        self.block4 = EncoderBlock(in_channels=256, out_channels=512, kernel=(3, 3), pool_size=(2, 2), dropout=dropout)
 
-    def forward(self, input:torch.Tensor) -> Tuple[torch.Tensor, Tuple[torch.Tensor, ...]]:
+    def forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, Tuple[torch.Tensor, ...]]:
         """The call function."""
         skip1, features = self.block1(input)
         skip2, features = self.block2(features)
@@ -154,13 +161,12 @@ class UnetDecoder(nn.Module):
         """Initialization."""
         super().__init__()
 
-        self.block1 = DecoderBlock(in_channels=1024, out_channels=512, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.block2 = DecoderBlock(in_channels=512, out_channels=256, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.block3 = DecoderBlock(in_channels=256, out_channels=128, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.block4 = DecoderBlock(in_channels=128, out_channels=64, kernel=(3, 3), strides=(2, 2),dropout=dropout)
-        self.final_layer = nn.Conv2d(in_channels=64, out_channels=1, kernel_size=(1,1), padding=0, bias=True)
+        self.block1 = DecoderBlock(in_channels=1024, out_channels=512, kernel=(3, 3), strides=(2, 2), dropout=dropout)
+        self.block2 = DecoderBlock(in_channels=512, out_channels=256, kernel=(3, 3), strides=(2, 2), dropout=dropout)
+        self.block3 = DecoderBlock(in_channels=256, out_channels=128, kernel=(3, 3), strides=(2, 2), dropout=dropout)
+        self.block4 = DecoderBlock(in_channels=128, out_channels=64, kernel=(3, 3), strides=(2, 2), dropout=dropout)
+        self.final_layer = nn.Conv2d(in_channels=64, out_channels=1, kernel_size=(1, 1), padding=0, bias=True)
         torch.nn.init.kaiming_normal_(self.final_layer.weight)
-
 
     def forward(self, input: Tuple[torch.Tensor, Tuple[torch.Tensor, ...]]) -> torch.Tensor:
         """The call function."""

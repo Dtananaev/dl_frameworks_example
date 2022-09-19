@@ -16,9 +16,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 DEALINGS IN THE SOFTWARE.
 """
 
-from torchmetrics import Metric
-from typing import Optional, Any
+from typing import Any, Optional
+
 import torch
+from torchmetrics import Metric
+
 
 class AbsoluteRelativeError(Metric):
     """Computes absolute relatie error.
@@ -39,7 +41,7 @@ class AbsoluteRelativeError(Metric):
         values = torch.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0)
         num_samples = torch.sum((values != 0.0).type(preds.dtype))
 
-        self.abs_rel_err +=  torch.sum(values).float() /  num_samples
+        self.abs_rel_err += torch.sum(values).float() / num_samples
         self.batch_count += 1.0
 
     def compute(self):

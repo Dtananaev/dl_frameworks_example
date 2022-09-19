@@ -16,9 +16,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 DEALINGS IN THE SOFTWARE.
 """
 
+from typing import Optional
+
 import torch
 import torch.nn as nn
-from typing import Optional
+
 
 class HuberLoss(nn.Module):
     """This is implementation of the Huber loss.
@@ -28,6 +30,7 @@ class HuberLoss(nn.Module):
     Args:
         treshold: treshold regualte ratio between L1 and L2 losses
     """
+
     def __init__(self, treshold: float = 1) -> None:
         """Initialization."""
         super().__init__()
@@ -39,7 +42,6 @@ class HuberLoss(nn.Module):
         is_small_error = torch.abs(error) <= self.treshold
         small_error_loss = torch.square(error) / 2.0
         big_error_loss = self.treshold * (torch.abs(error) - (0.5 * self.treshold))
-        values =  torch.where(is_small_error, small_error_loss, big_error_loss)
+        values = torch.where(is_small_error, small_error_loss, big_error_loss)
 
         return values.sum()
-
