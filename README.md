@@ -1,4 +1,4 @@
-# Tensorflow code example
+# Tensorflow 2 and Pytorch code example
 
 This repository aims to present example of code style in tensorflow 2.0.
 The example is done on binary semantic segmentation dataset.
