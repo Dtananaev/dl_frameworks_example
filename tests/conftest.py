@@ -31,7 +31,7 @@ def data_dir()->str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "test_data"))
 
 
-@pytest.fiture(name="tmp_dir")
+@pytest.fixture(name="tmp_dir")
 def fixture_tmp_dir():
     """Crete temporal directory."""
     tmp_dir = tempfile.mkdtemp()

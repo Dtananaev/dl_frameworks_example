@@ -28,9 +28,9 @@ class Parameters:
     dataset_basepath: str = "/home/deeplearning_workspace/dl_frameworks_example/dataset"
 
     # Summary dir
-    summary_dir = "outputs/summary"
+    summary_dir: str = "outputs/summary"
     # Checkpoint dir
-    checkpoint_dir = "outputs/checkpoint"
+    checkpoint_dir: str = "outputs/checkpoint"
     # batch size
     batchsize: int = 5
 
