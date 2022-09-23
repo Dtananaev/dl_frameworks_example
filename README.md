@@ -83,6 +83,10 @@ In order to run training tensorflow:
 cd ~/dl_frameworks_example/framework_examples/tensorflow_sample
 python train.py
 ```
+You can see the summaries output in both cases by typing the following:
+```
+tensorboard --logdir=outputs
+```
 
 In order to run training pytorch:
 ```
