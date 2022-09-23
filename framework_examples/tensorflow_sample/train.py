@@ -117,14 +117,14 @@ def val_for_one_epoch(
     return losses
 
 
-def train():
+def train(parameters:Parameters=None)->None:
     # Setup gpu
     setup_gpu()
     # Set global seed to make reproducable experiments
     tf.random.set_seed(2022)
 
     # get parameters
-    param = Parameters()
+    param = Parameters() if parameters is None else parameters
 
     # Load dataset
     train_dataset = DepthDatasetTensorflow(

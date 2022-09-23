@@ -75,7 +75,7 @@ class DepthDatasetTensorflow:
         self.dataset = ds
 
     def load_data(self, data_input: List[str]) -> Tuple[np.ndarray, np.ndarray]:
-        """The function loads data.
+        """Load data.
 
         Args:
             data_input: the list with strings to image and label files

@@ -4,3 +4,4 @@ Pillow
 opencv-python
 tqdm
 setuptools==59.6.0
+pytest

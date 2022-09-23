@@ -15,9 +15,6 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-
-from typing import Optional
-
 import torch
 import torch.nn as nn
 
@@ -36,7 +33,7 @@ class HuberLoss(nn.Module):
         super().__init__()
         self.treshold = treshold
 
-    def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor)-> torch.Tensor:
         """The call fuction."""
         error = inputs - targets
         is_small_error = torch.abs(error) <= self.treshold

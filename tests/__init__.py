@@ -1,4 +1,4 @@
-"""The parameters file."""
+"""Init."""
 __copyright__ = """
 Copyright (c) 2022 Tananaev Denis
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -15,34 +15,3 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-import dataclasses
-from collections import namedtuple
-from typing import NamedTuple
-
-
-@dataclasses.dataclass
-class Parameters:
-    """The parameters class."""
-
-    # Path to the dataset folder
-    dataset_basepath: str = "/home/deeplearning_workspace/dl_frameworks_example/dataset"
-
-    # Summary dir
-    summary_dir = "outputs/summary"
-    # Checkpoint dir
-    checkpoint_dir = "outputs/checkpoint"
-    # batch size
-    batchsize: int = 5
-
-    # learning rate
-    learning_rate = 1e-4
-    # weight decay
-    weight_decay: float = 1e-6
-
-    # max number of epochs
-    epochs: int = 10
-
-    # input_resolution
-    resolution: NamedTuple("input_resolution", (("width", int), ("height", int))) = namedtuple(
-        "input_resolution", ["height", "width"]
-    )(128, 256)

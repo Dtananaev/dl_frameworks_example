@@ -1,4 +1,8 @@
-"""The parameters file."""
+"""Integration test.
+
+Note:
+    During training tensorflow grabs most of GPU memory, threfore each process should include tensorflow import.
+"""
 __copyright__ = """
 Copyright (c) 2022 Tananaev Denis
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -15,34 +19,28 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-import dataclasses
-from collections import namedtuple
-from typing import NamedTuple
 
+import multiprocessing
+import os
 
-@dataclasses.dataclass
-class Parameters:
-    """The parameters class."""
+def _run_training(output_dir:str)->None:
+    """Run training."""
+    from framework_examples.tensorflow_sample.train import train
+    from framework_examples.parameters import Parameters
 
-    # Path to the dataset folder
-    dataset_basepath: str = "/home/deeplearning_workspace/dl_frameworks_example/dataset"
+    test_args ={
+        "summary_dir":os.path.join(output_dir, "outputs"),
+        "checkpoint_dir": os.path.join(output_dir, "checkpoint"),
+        "epochs": 1,
+        "batchsize": 1,
+    }
 
-    # Summary dir
-    summary_dir = "outputs/summary"
-    # Checkpoint dir
-    checkpoint_dir = "outputs/checkpoint"
-    # batch size
-    batchsize: int = 5
+    param = Parameters(**test_args)
+    train(parameters=param)
 
-    # learning rate
-    learning_rate = 1e-4
-    # weight decay
-    weight_decay: float = 1e-6
-
-    # max number of epochs
-    epochs: int = 10
-
-    # input_resolution
-    resolution: NamedTuple("input_resolution", (("width", int), ("height", int))) = namedtuple(
-        "input_resolution", ["height", "width"]
-    )(128, 256)
+def test_integration(tmp_dir: str)-> None:
+    """Integration test."""
+    training_process = multiprocessing.Process(target=_run_training, args=(tmp_dir,))
+    training_process.start()
+    training_process.join()
+    assert training_process.exitcode ==0
