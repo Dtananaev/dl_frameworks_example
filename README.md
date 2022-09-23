@@ -76,3 +76,24 @@ python create_dataset_list.py
 ```
 it will create `../dataset/train.datatxt`, `../dataset/val.datatxt`, `../dataset/test.datatxt` with same data for demo purposes.
 
+# Run training
+
+In order to run training tensorflow:
+```
+cd ~/dl_frameworks_example/framework_examples/tensorflow_sample
+python train.py
+```
+
+In order to run training pytorch:
+```
+cd ~/dl_frameworks_example/framework_examples/pytoch_sample
+python train.py
+```
+
+# Run unit tests
+
+In order to run unittests:
+
+```
+python -m pytest ~/dl_frameworks_example/tests/tensorflow_sample
+```
