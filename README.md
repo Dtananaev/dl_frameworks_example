@@ -1,7 +1,7 @@
 # Tensorflow 2 and Pytorch code example
 
-This repository aims to present example of code style in tensorflow 2.0.
-The example is done on binary semantic segmentation dataset.
+This repository aims to present example of code style in tensorflow 2.0 and pytorch.
+The example is done on carla depth data.
 
 # Installation
 
